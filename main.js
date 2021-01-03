@@ -6,8 +6,8 @@ const app = express();
 const path = require('path');
 const port = 2300;
 
-app.get('/', (req, res) => {
-  getCoinbaseData();
+app.get('/', async (req, res) => {
+  console.log(await getCoinbaseData());
   res.sendFile(path.join(__dirname + '/index.html'));
 });
 
@@ -15,10 +15,10 @@ app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });
 
-const getCoinbaseData = () => {
+const getCoinbaseData = async () => {
   // request details
   const coinbaseURL = 'api.pro.coinbase.com';
-  const requestPath = '/profiles';
+  const requestPath = '/accounts';
   const method = 'GET';
 
   // create the prehash string by concatenating required parts
@@ -42,7 +42,7 @@ const getCoinbaseData = () => {
     method: method,
     headers: {
       'Content-Type': 'application/json',
-      'User-Agent': 'Mozilla/5.0', 
+      'User-Agent': 'Mozilla/5.0',
       'CB-ACCESS-KEY': process.env.CB_KEY, // The api key as a string.
       'CB-ACCESS-SIGN': sign, // The base64-encoded signature (see Signing a Message).
       'CB-ACCESS-TIMESTAMP': timestamp, // A timestamp for your request.
@@ -50,17 +50,26 @@ const getCoinbaseData = () => {
     },
   };
 
-  const req = https.request(options, (res) => {
-    console.log(`statusCode: ${res.statusCode}`);
+  let apiDataPromise = new Promise((resolve, reject) => {
+    const req = https.request(options, (res) => {
+      res.setEncoding('utf8');
+      let responseBody = '';
 
-    res.on('data', (d) => {
-      process.stdout.write(d);
+      res.on('data', (chunk) => {
+        responseBody += chunk;
+      });
+
+      res.on('end', () => {
+        resolve(JSON.parse(responseBody));
+      });
     });
+
+    req.on('error', (err) => {
+      reject(err);
+    });
+
+    req.end();
   });
 
-  req.on('error', (error) => {
-    console.error(error);
-  });
-  
-  req.end();
+  return await apiDataPromise;
 };
