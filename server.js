@@ -7,8 +7,14 @@ const path = require('path');
 const port = 2300;
 
 app.get('/', async (req, res) => {
-  console.log(await getCoinbaseData());
-  res.sendFile(path.join(__dirname + '/index.html'));
+  res.sendFile(path.join(__dirname + '/public/index.html'));
+});
+
+app.get('/api/accounts', async (req, res) => {
+  const accounts = await getCoinbaseData();
+  const activeAccounts = accounts.filter((account) => account.balance > 0);
+  
+  res.send(activeAccounts);
 });
 
 app.listen(port, () => {
