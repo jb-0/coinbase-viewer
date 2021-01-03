@@ -40,7 +40,7 @@ function displayAccounts(accounts, accountsContainer) {
     individualAccountContainer.appendChild(currencyHeader);
 
     // Add the balance
-    const balance = createElement('H2', account.balance);
+    const balance = createElement('H2', `Balance: ${parseFloat(account.balance).toFixed(5)}`);
     individualAccountContainer.appendChild(balance);
   });
 }
