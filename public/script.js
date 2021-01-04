@@ -7,24 +7,15 @@ async function init() {
   displayAccounts(accounts, accountsContainer);
 }
 
-/**
- * Fetch the coinbase accounts via the server route
- */
-async function getAccounts() {
-  const req = await fetch('/api/accounts');
-  const data = await req.json();
-
-  return data;
-}
-
+/******************************************************************************************
+* DISPLAY / RENDERING
+******************************************************************************************/
 /**
  * Display the accounts as elements in the DOM
  * @param {Array} accounts array of account objects
  * @param {Element} accountsContainer the target element for individual accounts to added to
  */
-function displayAccounts(accounts, accountsContainer) {
-  console.log(accountsContainer);
-
+async function displayAccounts(accounts, accountsContainer) {
   accounts.forEach((account) => {
     // Create a div for the account
     const individualAccountContainer = createElement(
@@ -42,6 +33,13 @@ function displayAccounts(accounts, accountsContainer) {
     // Add the balance
     const balance = createElement('H2', `Balance: ${parseFloat(account.balance).toFixed(5)}`);
     individualAccountContainer.appendChild(balance);
+
+    const convertedBalancePromise = convertCurrency(account.currency, 'USD', account.balance);
+    convertedBalancePromise.then(data => {
+      const balanceConverted = createElement('H2', `$ ${data.conversion}`);
+      individualAccountContainer.appendChild(balanceConverted);
+    })
+    
   });
 }
 
@@ -59,4 +57,28 @@ function createElement(element, innerText) {
   el.innerText = innerText || '';
 
   return el;
+}
+
+
+/******************************************************************************************
+* EXPRESS SERVER API CALLS
+******************************************************************************************/
+/**
+ * Fetch the coinbase accounts via the server route
+ */
+async function getAccounts() {
+  const req = await fetch('/api/accounts');
+  const data = await req.json();
+
+  return data;
+}
+
+/**
+ * Convert  via the server route
+ */
+async function convertCurrency(from, to, amount) {
+  const req = await fetch(`/api/convert/${from}-USD-${amount}`);
+  const data = await req.json();
+
+  return data;
 }
