@@ -15,16 +15,26 @@ app.get('/', async (req, res) => {
 app.get('/api/accounts', async (req, res) => {
   const accounts = await getCoinbaseData('/accounts', 'GET');
   const activeAccounts = accounts.filter((account) => account.balance > 0);
-  
+
   res.send(activeAccounts);
 });
 
+app.get('/api/convert/:from-:to-:amount', async (req, res) => {
+  const conversion = await getCoinbaseData('/conversions', 'POST', {
+    from: req.params.from,
+    to: req.params.to,
+    amount: 1,
+  });
+
+  res.send(conversion);
+});
+
 app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`);
+  console.log(`Coinbase viewer listening at http://localhost:${port}`);
 });
 
 const getCoinbaseData = async (requestPath, method, bodyObject) => {
-  const body = bodyObject || '';
+  const body = JSON.stringify(bodyObject) || '';
 
   const coinbaseURL = 'api.pro.coinbase.com';
 
@@ -44,7 +54,7 @@ const getCoinbaseData = async (requestPath, method, bodyObject) => {
 
   const options = {
     hostname: coinbaseURL,
-    port: 443,
+    // port: 443,
     path: requestPath,
     method: method,
     headers: {
@@ -56,6 +66,10 @@ const getCoinbaseData = async (requestPath, method, bodyObject) => {
       'CB-ACCESS-PASSPHRASE': process.env.CB_PASSPHRASE, // The passphrase you specified when creating the API key.
     },
   };
+
+  if (bodyObject) {
+    options.headers['Content-Length'] = body.length.toString();
+  }
 
   let apiDataPromise = new Promise((resolve, reject) => {
     const req = https.request(options, (res) => {
@@ -74,6 +88,10 @@ const getCoinbaseData = async (requestPath, method, bodyObject) => {
     req.on('error', (err) => {
       reject(err);
     });
+
+    if (bodyObject) {
+      req.write(body);
+    }
 
     req.end();
   });
