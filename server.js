@@ -13,7 +13,7 @@ app.get('/', async (req, res) => {
 });
 
 app.get('/api/accounts', async (req, res) => {
-  const accounts = await getCoinbaseData();
+  const accounts = await getCoinbaseData('/accounts', 'GET');
   const activeAccounts = accounts.filter((account) => account.balance > 0);
   
   res.send(activeAccounts);
@@ -23,15 +23,15 @@ app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });
 
-const getCoinbaseData = async () => {
+const getCoinbaseData = async (requestPath, method, bodyObject) => {
+  const body = bodyObject || '';
+
   // request details
   const coinbaseURL = 'api.pro.coinbase.com';
-  const requestPath = '/accounts';
-  const method = 'GET';
 
   // create the prehash string by concatenating required parts
   const timestamp = Date.now() / 1000;
-  const what = timestamp + method + requestPath;
+  const what = timestamp + method + requestPath + body;
 
   // decode the base64 secret
   const key = Buffer.from(process.env.CB_SECRET, 'base64');
