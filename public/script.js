@@ -8,21 +8,23 @@ async function init() {
 }
 
 /******************************************************************************************
-* DISPLAY / RENDERING
-******************************************************************************************/
+ * DISPLAY / RENDERING
+ ******************************************************************************************/
 /**
  * Display the accounts as elements in the DOM
  * @param {Array} accounts array of account objects
  * @param {Element} accountsContainer the target element for individual accounts to added to
  */
 async function displayAccounts(accounts, accountsContainer) {
-  accounts.forEach((account) => {
-    // Create a div for the account
-    const individualAccountContainer = createElement(
-      'DIV',
-      null,
-      ['account-container']
-    );
+  let combinedAccountsValue = 0;
+
+  const promises = accounts.map(async (account) => {
+    return getBidAsk(`${account.currency}-GBP`)
+    .then((data) => {
+      // Create a div for the account
+    const individualAccountContainer = createElement('DIV', null, [
+      'account-container',
+    ]);
     individualAccountContainer.classList.add('account-container');
     accountsContainer.appendChild(individualAccountContainer);
 
@@ -31,16 +33,35 @@ async function displayAccounts(accounts, accountsContainer) {
     individualAccountContainer.appendChild(currencyHeader);
 
     // Add the balance
-    const balance = createElement('H2', `Balance: ${parseFloat(account.balance).toFixed(5)}`);
+    const balance = createElement(
+      'H2',
+      `Balance: ${parseFloat(account.balance).toFixed(5)}`
+    );
     individualAccountContainer.appendChild(balance);
 
-    const convertedBalancePromise = convertCurrency(account.currency, 'USD', account.balance);
-    convertedBalancePromise.then(data => {
-      const balanceConverted = createElement('H2', `$ ${data.conversion}`);
-      individualAccountContainer.appendChild(balanceConverted);
+    // Add the converted balance
+    const balanceConverted = data.asks ? account.balance * data.asks[0][0] : false
+
+    if (balanceConverted) {
+      const balanceConvertedEl = createElement('H2', `£ ${parseFloat(balanceConverted).toFixed(2)}`);
+      individualAccountContainer.appendChild(balanceConvertedEl);
+
+      combinedAccountsValue += balanceConverted;
+    }
     })
-    
   });
+
+  Promise.all(promises).then(() => {
+    const combinedAccountsValueEl = createElement('H1', `Portfolio Value: £ ${parseFloat(combinedAccountsValue).toFixed(2)}`)
+    combinedAccountsValueEl.classList.add('total-account-value');
+    accountsContainer.insertBefore(combinedAccountsValueEl, accountsContainer.firstChild);
+
+    const accountContainers = document.querySelectorAll('.account-container');
+    accountContainers.forEach(accountContainer => {
+      accountContainer.style.opacity = 1;
+    })
+  });
+  
 }
 
 /**
@@ -59,10 +80,9 @@ function createElement(element, innerText) {
   return el;
 }
 
-
 /******************************************************************************************
-* EXPRESS SERVER API CALLS
-******************************************************************************************/
+ * EXPRESS SERVER API CALLS
+ ******************************************************************************************/
 /**
  * Fetch the coinbase accounts via the server route
  */
@@ -74,10 +94,10 @@ async function getAccounts() {
 }
 
 /**
- * Convert  via the server route
+ * Get product bid ask via the server route
  */
-async function convertCurrency(from, to, amount) {
-  const req = await fetch(`/api/convert/${from}-USD-${amount}`);
+async function getBidAsk(product) {
+  const req = await fetch(`/api/products/bidask/${product}`);
   const data = await req.json();
 
   return data;
