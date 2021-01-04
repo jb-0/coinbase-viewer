@@ -29,12 +29,12 @@ async function displayAccounts(accounts, accountsContainer) {
     accountsContainer.appendChild(individualAccountContainer);
 
     // Add the currency code as a header
-    const currencyHeader = createElement('H1', account.currency);
+    const currencyHeader = createElement('H2', account.currency);
     individualAccountContainer.appendChild(currencyHeader);
 
     // Add the balance
     const balance = createElement(
-      'H2',
+      'p',
       `Balance: ${parseFloat(account.balance).toFixed(5)}`
     );
     individualAccountContainer.appendChild(balance);
@@ -43,7 +43,7 @@ async function displayAccounts(accounts, accountsContainer) {
     const balanceConverted = data.asks ? account.balance * data.asks[0][0] : false
 
     if (balanceConverted) {
-      const balanceConvertedEl = createElement('H2', `£ ${parseFloat(balanceConverted).toFixed(2)}`);
+      const balanceConvertedEl = createElement('p', `£ ${parseFloat(balanceConverted).toFixed(2)}`);
       individualAccountContainer.appendChild(balanceConvertedEl);
 
       combinedAccountsValue += balanceConverted;
@@ -55,11 +55,8 @@ async function displayAccounts(accounts, accountsContainer) {
     const combinedAccountsValueEl = createElement('H1', `Portfolio Value: £ ${parseFloat(combinedAccountsValue).toFixed(2)}`)
     combinedAccountsValueEl.classList.add('total-account-value');
     accountsContainer.insertBefore(combinedAccountsValueEl, accountsContainer.firstChild);
-
-    const accountContainers = document.querySelectorAll('.account-container');
-    accountContainers.forEach(accountContainer => {
-      accountContainer.style.opacity = 1;
-    })
+    accountsContainer.style.opacity = 1;
+    accountsContainer.style.transform = "scale(1)";
   });
   
 }
