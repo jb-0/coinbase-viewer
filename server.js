@@ -14,13 +14,18 @@ app.get('/', async (req, res) => {
 
 app.get('/api/accounts', async (req, res) => {
   const accounts = await getCoinbaseData('/accounts', 'GET');
-  const activeAccounts = accounts.filter((account) => account.balance > 0);
+  const activeAccounts = accounts.filter(
+    (account) => account.balance > 0 && account.currency !== 'EUR'
+  );
 
   res.send(activeAccounts);
 });
 
 app.get('/api/products/bidask/:id', async (req, res) => {
-  const bidAsk = await getCoinbaseData(`/products/${req.params.id}/book`, 'GET');
+  const bidAsk = await getCoinbaseData(
+    `/products/${req.params.id}/book`,
+    'GET'
+  );
 
   res.send(bidAsk);
 });
