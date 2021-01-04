@@ -26,7 +26,6 @@ app.listen(port, () => {
 const getCoinbaseData = async (requestPath, method, bodyObject) => {
   const body = bodyObject || '';
 
-  // request details
   const coinbaseURL = 'api.pro.coinbase.com';
 
   // create the prehash string by concatenating required parts
