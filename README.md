@@ -5,7 +5,8 @@ A simple express app that allows you to view your coinbase accounts using the Co
 ## Requirements
 You will need to have Node.js installed to run this project, please visit the node site for install
 instructions: https://nodejs.org/en/download/. You will also need a Coinbase Pro account and will 
-need to issue an API key with view access to the accounts/portfolio you wish to display.
+need to issue an API key with view access to the accounts/portfolio you wish to display. For conversion
+you will require a nomics account.
 
 ## Installation
 Once you have NPM installed you can run the following shell commands to install this project, two
@@ -22,6 +23,7 @@ however you can use your preferred approach to assigning environment variables.
 - **CB_KEY** - The api key as a string.
 - **CB_SECRET** - The api secret associated with the key.
 - **CB_PASSPHRASE** - The passphrase you specified when creating the API key.
+- **NOMICS_KEY** - The nomics api key.
 
 ## Running the application
 To run the app you can execute the following commands in the project root directory:
