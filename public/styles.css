@@ -6,6 +6,8 @@
 
 body {
   font-family: 'Roboto', sans-serif;
+  background-color: rgb(53, 54, 58);
+  color: rgb(232, 234, 237);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -25,11 +27,18 @@ body {
 }
 
 .account-container {
-  border: solid 2px black;
+  border: solid 2px rgb(232, 234, 237);
   margin: 10px;
   border-radius: 10px;
   padding: 10px;
   width: 300px;
+  height: 200px;
+  opacity: 0;
+  transition: opacity 0.5s ease-in;
+}
+
+.total-account-value {
+  flex-basis: 100%;
 }
 
 #footer {
@@ -39,4 +48,9 @@ body {
   width: 100%;
   height: 40px;
   padding-bottom: 20px;
+  color: rgb(232, 234, 237)
+}
+
+a {
+  color: inherit;
 }
