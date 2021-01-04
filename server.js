@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const app = express();
 const path = require('path');
 const port = 2300;
+let exchangeRatesUSD;
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -15,23 +16,59 @@ app.get('/', async (req, res) => {
 app.get('/api/accounts', async (req, res) => {
   const accounts = await getCoinbaseData('/accounts', 'GET');
   const activeAccounts = accounts.filter((account) => account.balance > 0);
+  exchangeRatesUSD = await getNomicsData();
 
   res.send(activeAccounts);
 });
 
 app.get('/api/convert/:from-:to-:amount', async (req, res) => {
-  const conversion = await getCoinbaseData('/conversions', 'POST', {
-    from: req.params.from,
-    to: req.params.to,
-    amount: 1,
-  });
+  const rate = exchangeRatesUSD.filter(exchangeRate => exchangeRate.currency === req.params.from)
 
-  res.send(conversion);
+  res.send({'conversion': rate[0].rate * req.params.amount});
 });
 
 app.listen(port, () => {
   console.log(`Coinbase viewer listening at http://localhost:${port}`);
 });
+
+const getNomicsData = async () => {
+  const nomicsURL = 'api.nomics.com'
+  const path = '/v1/exchange-rates'
+  const auth = `?key=${process.env.NOMICS_KEY}`
+
+  const options = {
+    hostname: nomicsURL,
+    path: path + auth,
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'User-Agent': 'Mozilla/5.0',
+    },
+  };
+
+  let apiDataPromise = new Promise((resolve, reject) => {
+    const req = https.request(options, (res) => {
+      res.setEncoding('utf8');
+      let responseBody = '';
+
+      res.on('data', (chunk) => {
+        responseBody += chunk;
+      });
+
+      res.on('end', () => {
+        resolve(JSON.parse(responseBody));
+      });
+    });
+
+    req.on('error', (err) => {
+      reject(err);
+    });
+
+    req.end();
+  });
+
+  return await apiDataPromise;
+}
 
 const getCoinbaseData = async (requestPath, method, bodyObject) => {
   const body = JSON.stringify(bodyObject) || '';
