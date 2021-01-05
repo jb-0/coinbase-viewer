@@ -45,10 +45,25 @@ async function displayAccounts(accounts, accountsContainer) {
     const balanceConverted = data.bids ? account.balance * data.bids[0][0] : false
 
     if (balanceConverted) {
+      // Created an element for the converted balance
       const balanceConvertedEl = createElement('p', `£ ${parseFloat(balanceConverted).toFixed(2)}`);
       individualAccountContainer.appendChild(balanceConvertedEl);
 
+      // Add the converted balance amount to the total for the portfolio
       combinedAccountsValue += balanceConverted;
+
+      // Display the bid ask values
+      const bidAskEl = createElement('DIV')
+      individualAccountContainer.appendChild(bidAskEl)
+      bidAskEl.classList.add('bid-ask-container');
+
+      const bidEl = createElement('DIV', data.bids[0][0])
+      bidAskEl.appendChild(bidEl)
+      bidEl.classList.add('bid-container');
+
+      const askEl = createElement('DIV', data.asks[0][0])
+      bidAskEl.appendChild(askEl)
+      askEl.classList.add('ask-container');
     }
     })
   });
