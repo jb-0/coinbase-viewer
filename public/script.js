@@ -18,6 +18,8 @@ async function init() {
 async function displayAccounts(accounts, accountsContainer) {
   let combinedAccountsValue = 0;
 
+  // Per linter warning we want to avoid using await in a loop, instead we get the bid ask as a
+  // promise, when resolved we populate the container for the given account
   const promises = accounts.map(async (account) => {
     return getBidAsk(`${account.currency}-GBP`)
     .then((data) => {
@@ -40,7 +42,7 @@ async function displayAccounts(accounts, accountsContainer) {
     individualAccountContainer.appendChild(balance);
 
     // Add the converted balance
-    const balanceConverted = data.asks ? account.balance * data.asks[0][0] : false
+    const balanceConverted = data.bids ? account.balance * data.bids[0][0] : false
 
     if (balanceConverted) {
       const balanceConvertedEl = createElement('p', `£ ${parseFloat(balanceConverted).toFixed(2)}`);
@@ -51,6 +53,8 @@ async function displayAccounts(accounts, accountsContainer) {
     })
   });
 
+  // On resolution of all promises we render a total value for the portfolio and also apply some
+  // styling to make the loading transition smooth
   Promise.all(promises).then(() => {
     const combinedAccountsValueEl = createElement('H1', `Portfolio Value: £ ${parseFloat(combinedAccountsValue).toFixed(2)}`)
     combinedAccountsValueEl.classList.add('total-account-value');
@@ -58,7 +62,6 @@ async function displayAccounts(accounts, accountsContainer) {
     accountsContainer.style.opacity = 1;
     accountsContainer.style.transform = "scale(1)";
   });
-  
 }
 
 /**
