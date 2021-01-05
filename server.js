@@ -30,6 +30,10 @@ app.get('/api/products/bidask/:id', async (req, res) => {
   res.send(bidAsk);
 });
 
+app.get('/api/user/boughtrates', (req, res) => {
+  res.send(process.env.BOUGHT_RATES)
+});
+
 app.listen(port, () => {
   console.log(`Coinbase viewer listening at http://localhost:${port}`);
 });
