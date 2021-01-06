@@ -17,6 +17,9 @@ async function init() {
  */
 async function displayAccounts(accounts, accountsContainer) {
   let combinedAccountsValue = 0;
+  let combinedProfitAndLoss = 0;
+
+  const purchasedRates = await getPurchasedRates();
 
   // Per linter warning we want to avoid using await in a loop, instead we get the bid ask as a
   // promise, when resolved we populate the container for the given account
@@ -37,20 +40,27 @@ async function displayAccounts(accounts, accountsContainer) {
     // Add the balance
     const balance = createElement(
       'p',
-      `Balance: ${parseFloat(account.balance).toFixed(5)}`
+      `Balance: ${parseFloat(account.balance).toFixed(3)}`
     );
     individualAccountContainer.appendChild(balance);
 
-    // Add the converted balance
+    // Add the converted balance to GBP
     const balanceConverted = data.bids ? account.balance * data.bids[0][0] : false
+    const profitAndLoss = balanceConverted - (purchasedRates[account.currency] * account.balance)
 
     if (balanceConverted) {
       // Created an element for the converted balance
-      const balanceConvertedEl = createElement('p', `£ ${parseFloat(balanceConverted).toFixed(2)}`);
+      const balanceConvertedEl = createElement(
+        'p',
+        `£ ${parseFloat(balanceConverted).toFixed(2)} (${parseFloat(
+          profitAndLoss
+        ).toFixed(2)})`
+      );
       individualAccountContainer.appendChild(balanceConvertedEl);
 
       // Add the converted balance amount to the total for the portfolio
       combinedAccountsValue += balanceConverted;
+      combinedProfitAndLoss += profitAndLoss;
 
       // Display the bid ask values
       const bidAskEl = createElement('DIV')
@@ -71,9 +81,14 @@ async function displayAccounts(accounts, accountsContainer) {
   // On resolution of all promises we render a total value for the portfolio and also apply some
   // styling to make the loading transition smooth
   Promise.all(promises).then(() => {
-    const combinedAccountsValueEl = createElement('H1', `Portfolio Value: £ ${parseFloat(combinedAccountsValue).toFixed(2)}`)
+    const combinedAccountsValueEl = createElement(
+      'H1',
+      `Portfolio Value: £ ${parseFloat(combinedAccountsValue).toFixed(
+        2
+      )} (${parseFloat(combinedProfitAndLoss).toFixed(2)})`
+    );
     combinedAccountsValueEl.classList.add('total-account-value');
-    
+
     accountsContainer.insertBefore(combinedAccountsValueEl, accountsContainer.firstChild);
     accountsContainer.style.opacity = 1;
     accountsContainer.style.transform = "scale(1)";
@@ -114,6 +129,16 @@ async function getAccounts() {
  */
 async function getBidAsk(product) {
   const req = await fetch(`/api/products/bidask/${product}`);
+  const data = await req.json();
+
+  return data;
+}
+
+/**
+ * Get rates the user paid for each currency via the server route
+ */
+async function getPurchasedRates() {
+  const req = await fetch('/api/user/purchased/rates');
   const data = await req.json();
 
   return data;
