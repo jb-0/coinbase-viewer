@@ -73,6 +73,7 @@ async function displayAccounts(accounts, accountsContainer) {
   Promise.all(promises).then(() => {
     const combinedAccountsValueEl = createElement('H1', `Portfolio Value: £ ${parseFloat(combinedAccountsValue).toFixed(2)}`)
     combinedAccountsValueEl.classList.add('total-account-value');
+    
     accountsContainer.insertBefore(combinedAccountsValueEl, accountsContainer.firstChild);
     accountsContainer.style.opacity = 1;
     accountsContainer.style.transform = "scale(1)";
