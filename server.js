@@ -30,7 +30,7 @@ app.get('/api/products/bidask/:id', async (req, res) => {
   res.send(bidAsk);
 });
 
-app.get('/api/user/boughtrates', (req, res) => {
+app.get('/api/user/purchased/rates', (req, res) => {
   res.send(process.env.BOUGHT_RATES)
 });
 
