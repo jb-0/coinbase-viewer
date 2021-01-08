@@ -30,4 +30,4 @@ yarn-error.log*
 .prettierrc
 
 /_solutions
-/keys
+saKey.json
