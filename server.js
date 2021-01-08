@@ -1,26 +1,80 @@
 require('dotenv').config();
+const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
 const express = require('express');
 const https = require('https');
 const crypto = require('crypto');
+const admin = require("firebase-admin");
+
 const app = express();
 const path = require('path');
 const port = 2300;
 
+app.use(bodyParser.json());
+app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 /***************************************************************************************************
 FIREBASE SETUP 
 ***************************************************************************************************/
+const serviceAccount = require("./saKey.json");
 
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+
+/***************************************************************************************************
+AUTH MIDDLEWARE
+***************************************************************************************************/
+const isLoggedIn = (req, res, next) => {
+  const sessionCookie = req.cookies.session || "";
+
+  console.log(sessionCookie);
+
+  admin
+    .auth()
+    .verifySessionCookie(sessionCookie, true /** checkRevoked */)
+    .then(() => {
+      next()
+    })
+    .catch((error) => {
+      res.redirect("/");
+    });
+};
 
 /***************************************************************************************************
 ROUTE DEFINITION
 ***************************************************************************************************/
 app.get('/', async (req, res) => {
-  res.sendFile(path.join(__dirname + '/public/index.html'));
+  res.sendFile(path.join(__dirname + '/public/login.html'));
 });
 
-app.get('/api/accounts', async (req, res) => {
+app.post("/sessionLogin", (req, res) => {
+  const idToken = req.body.idToken.toString();
+
+  const expiresIn = 60 * 60 * 24 * 5 * 1000;
+
+  admin
+    .auth()
+    .createSessionCookie(idToken, { expiresIn })
+    .then(
+      (sessionCookie) => {
+        const options = { maxAge: expiresIn, httpOnly: true };
+        res.cookie("session", sessionCookie, options);
+        res.end(JSON.stringify({ status: "success" }));
+      },
+      (error) => {
+        res.status(401).send("UNAUTHORIZED REQUEST!");
+      }
+    );
+});
+
+app.get('/accounts', isLoggedIn, async (req, res) => {
+  res.sendFile(path.join(__dirname + '/public/accounts.html'));
+});
+
+app.get('/api/accounts', isLoggedIn, async (req, res) => {
   const accounts = await getCoinbaseData('/accounts', 'GET');
   const activeAccounts = accounts.filter(
     (account) => account.balance > 0 && account.currency !== 'EUR'
@@ -29,7 +83,7 @@ app.get('/api/accounts', async (req, res) => {
   res.send(activeAccounts);
 });
 
-app.get('/api/products/bidask/:id', async (req, res) => {
+app.get('/api/products/bidask/:id', isLoggedIn, async (req, res) => {
   const bidAsk = await getCoinbaseData(
     `/products/${req.params.id}/book`,
     'GET'
@@ -38,7 +92,7 @@ app.get('/api/products/bidask/:id', async (req, res) => {
   res.send(bidAsk);
 });
 
-app.get('/api/user/purchased/rates', (req, res) => {
+app.get('/api/user/purchased/rates', isLoggedIn, (req, res) => {
   res.send(process.env.BOUGHT_RATES)
 });
 
