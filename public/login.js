@@ -1,59 +1,45 @@
-loginInit();
-
-async function loginInit() {
-  firebaseInit();
-  firebaseUI();
-}
-
-/******************************************************************************************
- * FIREBASE
- ******************************************************************************************/
-function firebaseInit() {
-  // Your web app's Firebase configuration
-  var firebaseConfig = {
-    apiKey: "AIzaSyCKZ9dfFYc-C6XxMf-K8keg3mp0Jin5CFI",
-    authDomain: "coinbase-viewer.firebaseapp.com",
-    projectId: "coinbase-viewer" ,
-    storageBucket: "coinbase-viewer.appspot.com",
-    messagingSenderId: "1083630918508",
-    appId: "1:1083630918508:web:43b9d195b4c64c3e9c3149"
+window.addEventListener('DOMContentLoaded', () => {
+  const firebaseConfig = {
+    apiKey: 'AIzaSyCKZ9dfFYc-C6XxMf-K8keg3mp0Jin5CFI',
+    authDomain: 'coinbase-viewer.firebaseapp.com',
+    projectId: 'coinbase-viewer',
+    storageBucket: 'coinbase-viewer.appspot.com',
+    messagingSenderId: '1083630918508',
+    appId: '1:1083630918508:web:43b9d195b4c64c3e9c3149',
   };
 
-  // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
-}
 
-function firebaseUI() {
-  // Initialize the FirebaseUI Widget using Firebase.
-  var ui = new firebaseui.auth.AuthUI(firebase.auth());
+  firebase.auth().setPersistence(firebase.auth.Auth.Persistence.NONE);
 
-  var uiConfig = {
-    callbacks: {
-      signInSuccessWithAuthResult: function (authResult, redirectUrl) {
-        // User successfully signed in.
-        // Return type determines whether we continue the redirect automatically
-        // or whether we leave that to developer to handle.
-        return true;
-      },
-      uiShown: function () {
-        // The widget is rendered.
-        // Hide the loader.
-        document.getElementById('loader').style.display = 'none';
-      },
-    },
-    // Will use popup for IDP Providers sign-in flow instead of the default, redirect.
-    signInFlow: 'popup',
-    signInSuccessUrl: '/accounts',
-    signInOptions: [
-      // Leave the lines as is for the providers you want to offer your users.
-      firebase.auth.EmailAuthProvider.PROVIDER_ID,
-    ],
-    // Terms of service url.
-    tosUrl: '/',
-    // Privacy policy url.
-    privacyPolicyUrl: '/',
-  };
+  document
+    .getElementById('login')
+    .addEventListener('submit', (event) => {
+      event.preventDefault();
+      const login = event.target.login.value;
+      const password = event.target.password.value;
 
-  // The start method will wait until the DOM is loaded.
-  ui.start('#firebaseui-auth-container', uiConfig);
-}
+      firebase
+        .auth()
+        .signInWithEmailAndPassword(login, password)
+        .then(({ user }) => {
+          return user.getIdToken().then((idToken) => {
+            return fetch('/sessionLogin', {
+              method: 'POST',
+              headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ idToken }),
+            });
+          });
+        })
+        .then(() => {
+          return firebase.auth().signOut();
+        })
+        .then(() => {
+          window.location.assign('/accounts');
+        });
+      return false;
+    });
+});
