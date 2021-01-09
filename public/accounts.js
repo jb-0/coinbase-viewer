@@ -81,11 +81,12 @@ async function displayAccounts(accounts, accountsContainer) {
   // On resolution of all promises we render a total value for the portfolio and also apply some
   // styling to make the loading transition smooth
   Promise.all(promises).then(() => {
-    const combinedAccountsValueEl = createElement(
-      'H1',
-      `Portfolio Value: £ ${parseFloat(combinedAccountsValue).toFixed(
-        2
-      )} (${parseFloat(combinedProfitAndLoss).toFixed(2)})`
+    const portfolioValue = parseFloat(combinedAccountsValue).toFixed(2)
+    const pnl = parseFloat(combinedProfitAndLoss).toFixed(2) > 0 ? 
+      `+${parseFloat(combinedProfitAndLoss).toFixed(2)}`:
+      parseFloat(combinedProfitAndLoss).toFixed(2)
+
+    const combinedAccountsValueEl = createElement('H1',`£ ${portfolioValue} \n (${pnl})`
     );
     combinedAccountsValueEl.classList.add('total-account-value');
 
