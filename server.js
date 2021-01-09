@@ -17,10 +17,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 /***************************************************************************************************
 FIREBASE SETUP 
 ***************************************************************************************************/
-const serviceAccount = require("./saKey.json");
-
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
+  credential: admin.credential.cert(JSON.parse(process.env.SA_KEY)),
 });
 
 
