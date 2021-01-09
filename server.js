@@ -30,8 +30,6 @@ AUTH MIDDLEWARE
 const isLoggedIn = (req, res, next) => {
   const sessionCookie = req.cookies.session || "";
 
-  console.log(sessionCookie);
-
   admin
     .auth()
     .verifySessionCookie(sessionCookie, true /** checkRevoked */)
