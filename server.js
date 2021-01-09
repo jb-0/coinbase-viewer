@@ -8,7 +8,7 @@ const admin = require("firebase-admin");
 
 const app = express();
 const path = require('path');
-const port = 2300;
+const PORT = process.env.PORT || 2300;
 
 app.use(bodyParser.json());
 app.use(cookieParser());
@@ -92,8 +92,8 @@ app.get('/api/user/purchased/rates', isLoggedIn, (req, res) => {
   res.send(process.env.BOUGHT_RATES)
 });
 
-app.listen(port, () => {
-  console.log(`Coinbase viewer listening at http://localhost:${port}`);
+app.listen(PORT, () => {
+  console.log(`Coinbase viewer listening at http://localhost:${PORT}`);
 });
 
 /***************************************************************************************************
