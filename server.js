@@ -1,32 +1,31 @@
-require('dotenv').config();
-const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
-const express = require('express');
-const https = require('https');
-const crypto = require('crypto');
-const admin = require("firebase-admin");
+require('dotenv').config()
+const bodyParser = require('body-parser')
+const cookieParser = require('cookie-parser')
+const express = require('express')
+const https = require('https')
+const crypto = require('crypto')
+const admin = require('firebase-admin')
 
-const app = express();
-const path = require('path');
-const PORT = process.env.PORT || 2300;
+const app = express()
+const path = require('path')
+const PORT = process.env.PORT || 2300
 
-app.use(bodyParser.json());
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(bodyParser.json())
+app.use(cookieParser())
+app.use(express.static(path.join(__dirname, 'public')))
 
 /***************************************************************************************************
 FIREBASE SETUP 
 ***************************************************************************************************/
 admin.initializeApp({
   credential: admin.credential.cert(JSON.parse(process.env.SA_KEY)),
-});
-
+})
 
 /***************************************************************************************************
 AUTH MIDDLEWARE
 ***************************************************************************************************/
 const isLoggedIn = (req, res, next) => {
-  const sessionCookie = req.cookies.session || "";
+  const sessionCookie = req.cookies.session || ''
 
   admin
     .auth()
@@ -35,88 +34,85 @@ const isLoggedIn = (req, res, next) => {
       next()
     })
     .catch((error) => {
-      res.redirect("/");
-    });
-};
+      res.redirect('/')
+    })
+}
 
 /***************************************************************************************************
 ROUTE DEFINITION
 ***************************************************************************************************/
 app.get('/', async (req, res) => {
-  res.sendFile(path.join(__dirname + '/public/login.html'));
-});
+  res.sendFile(path.join(__dirname + '/public/login.html'))
+})
 
-app.post("/sessionLogin", (req, res) => {
-  const idToken = req.body.idToken.toString();
+app.post('/sessionLogin', (req, res) => {
+  const idToken = req.body.idToken.toString()
 
-  const expiresIn = 60 * 60 * 24 * 5 * 1000;
+  const expiresIn = 60 * 60 * 24 * 5 * 1000
 
   admin
     .auth()
     .createSessionCookie(idToken, { expiresIn })
     .then(
       (sessionCookie) => {
-        const options = { maxAge: expiresIn, httpOnly: true };
-        res.cookie("session", sessionCookie, options);
-        res.end(JSON.stringify({ status: "success" }));
+        const options = { maxAge: expiresIn, httpOnly: true }
+        res.cookie('session', sessionCookie, options)
+        res.end(JSON.stringify({ status: 'success' }))
       },
       (error) => {
-        res.status(401).send("UNAUTHORIZED REQUEST!");
+        res.status(401).send('UNAUTHORIZED REQUEST!')
       }
-    );
-});
+    )
+})
 
 app.get('/accounts', isLoggedIn, async (req, res) => {
-  res.sendFile(path.join(__dirname + '/public/accounts.html'));
-});
+  res.sendFile(path.join(__dirname + '/public/accounts.html'))
+})
 
 app.get('/api/accounts', isLoggedIn, async (req, res) => {
-  const accounts = await getCoinbaseData('/accounts', 'GET');
+  const accounts = await getCoinbaseData('/accounts', 'GET')
   const activeAccounts = accounts.filter(
     (account) => account.balance > 0 && account.currency !== 'EUR'
-  );
+  )
 
-  res.send(activeAccounts);
-});
+  res.send(activeAccounts)
+})
 
 app.get('/api/products/bidask/:id', isLoggedIn, async (req, res) => {
-  const bidAsk = await getCoinbaseData(
-    `/products/${req.params.id}/book`,
-    'GET'
-  );
+  const bidAsk = await getCoinbaseData(`/products/${req.params.id}/book`, 'GET')
 
-  res.send(bidAsk);
-});
+  res.send(bidAsk)
+})
 
 app.get('/api/user/purchased/rates', isLoggedIn, (req, res) => {
   res.send(process.env.BOUGHT_RATES)
-});
+})
 
 app.listen(PORT, () => {
-  console.log(`Coinbase viewer listening at http://localhost:${PORT}`);
-});
+  console.log(`Coinbase viewer listening at http://localhost:${PORT}`)
+})
 
 /***************************************************************************************************
 COINBASE API
 ***************************************************************************************************/
 const getCoinbaseData = async (requestPath, method, bodyObject) => {
-  const body = JSON.stringify(bodyObject) || '';
+  const body = JSON.stringify(bodyObject) || ''
 
-  const coinbaseURL = 'api.pro.coinbase.com';
+  const coinbaseURL = 'api.pro.coinbase.com'
 
   // create the prehash string by concatenating required parts
-  const timestamp = Date.now() / 1000;
-  const what = timestamp + method + requestPath + body;
+  const timestamp = Date.now() / 1000
+  const what = timestamp + method + requestPath + body
 
   // decode the base64 secret
-  const key = Buffer.from(process.env.CB_SECRET, 'base64');
+  const key = Buffer.from(process.env.CB_SECRET, 'base64')
 
   // create a sha256 hmac with the secret
-  const hmac = crypto.createHmac('sha256', key);
+  const hmac = crypto.createHmac('sha256', key)
 
   // sign the require message with the hmac
   // and finally base64 encode the result
-  const sign = hmac.update(what).digest('base64');
+  const sign = hmac.update(what).digest('base64')
 
   const options = {
     hostname: coinbaseURL,
@@ -130,36 +126,36 @@ const getCoinbaseData = async (requestPath, method, bodyObject) => {
       'CB-ACCESS-TIMESTAMP': timestamp, // A timestamp for your request.
       'CB-ACCESS-PASSPHRASE': process.env.CB_PASSPHRASE, // The passphrase you specified when creating the API key.
     },
-  };
+  }
 
   if (bodyObject) {
-    options.headers['Content-Length'] = body.length.toString();
+    options.headers['Content-Length'] = body.length.toString()
   }
 
   let apiDataPromise = new Promise((resolve, reject) => {
     const req = https.request(options, (res) => {
-      res.setEncoding('utf8');
-      let responseBody = '';
+      res.setEncoding('utf8')
+      let responseBody = ''
 
       res.on('data', (chunk) => {
-        responseBody += chunk;
-      });
+        responseBody += chunk
+      })
 
       res.on('end', () => {
-        resolve(JSON.parse(responseBody));
-      });
-    });
+        resolve(JSON.parse(responseBody))
+      })
+    })
 
     req.on('error', (err) => {
-      reject(err);
-    });
+      reject(err)
+    })
 
     if (bodyObject) {
-      req.write(body);
+      req.write(body)
     }
 
-    req.end();
-  });
+    req.end()
+  })
 
-  return await apiDataPromise;
-};
+  return await apiDataPromise
+}
